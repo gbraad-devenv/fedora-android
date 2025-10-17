@@ -1,0 +1,30 @@
+ARG BASE_IMAGE="ghcr.io/gbraad-devenv/fedora/dotfiles"
+ARG BASE_VERSION="41"
+
+FROM ${BASE_IMAGE}:${BASE_VERSION}
+
+ARG USER="gbraad"
+
+USER root
+
+RUN dnf install -y \
+	java-21-openjdk \
+    && dnf install -y \
+	python3-sdkmanager android-tools \
+    && dnf clean all \
+    && rm -rf /var/cache/yum
+
+RUN mkdir -p /opt/android-sdk \
+    && chown ${USER} /opt/android-sdk
+
+USER ${USER}
+
+RUN sdkmanager "platform-tools" "platforms;android-30" "build-tools;30.0.3" "ndk;29.0.14206865" \
+    && yes | sdkmanager --licenses
+
+USER root
+
+RUN systemctl enable tailscaled
+
+ENTRYPOINT ["/sbin/init"]
+#CMD ["/sbin/init"]
